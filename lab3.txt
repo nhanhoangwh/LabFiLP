@@ -1,0 +1,191 @@
+-module(multiset).
+-export([new/0, add/2, remove/2, count/2, size/1, items/1, union/2]).
+
+new() -> dict:new().
+
+add(Elem, Dict) ->
+    case dict:is_key(Elem, Dict) of
+        true -> dict:update_counter(Elem, 1, Dict);
+        false -> dict:store(Elem, 1, Dict)
+    end.
+
+remove(Elem, Dict) ->
+    case dict:is_key(Elem, Dict) of
+        true ->
+            case dict:fetch(Elem, Dict) > 1 of
+                true -> dict:update_counter(Elem, -1, Dict);
+                false -> dict:erase(Elem, Dict)
+            end;
+        false -> Dict
+    end.
+
+count(Elem, Dict) -> dict:fetch(Elem, Dict, 0).
+
+size(Dict) -> dict:size(Dict).
+
+items(Dict) -> dict:to_list(Dict).
+
+union(MS1, MS2) ->
+    MS = new(),
+    Dicts = [MS1, MS2],
+    lists:foldl(fun(Dict, Acc) ->
+                      dict:fold(fun(Elem, Count, Acc1) ->
+                                       add(Elem, Acc1, Count)
+                               end, Acc, Dict)
+              end, MS, Dicts),
+    MS.
+    
+add(Elem, MS, Count) ->
+    lists:foldl(fun(_I, Acc) -> add(Elem, Acc) end, MS, lists:seq(1, Count)).
+
+
+
+
+-module(multiset).
+-export([new/0, add/2, count/2, union/2]).
+
+new() -> dict:new().
+
+add(Key, Dict) ->
+    case dict:find(Key, Dict) of
+        error ->
+            dict:store(Key, 1, Dict);
+        {ok, Count} ->
+            dict:store(Key, Count+1, Dict)
+    end.
+
+count(Key, Dict) ->
+    case dict:find(Key, Dict) of
+        error ->
+            0;
+        {ok, Count} ->
+            Count
+    end.
+
+union(Multiset1, Multiset2) ->
+    Multiset = dict:merge(fun(_Key, Count1, Count2) ->
+        case Count2 of
+            undefined -> Count1;
+            _ -> Count1 + Count2
+        end
+    end, Multiset1, Multiset2),
+    dict:filter(fun(_Key, Count) -> Count > 0 end, Multiset).
+
+
+
+
+
+Set = multiset:new().
+Set2 = multiset:add("apple", Set).
+Set3 = multiset:add("banana", Set2).
+Set4 = multiset:add("apple", Set3).
+
+Set5 = multiset:add("banana", Set4).
+Set6 = multiset:add("apple", Set5).
+
+Set7 = multiset:add("cherry", Set6).
+Set8 = multiset:add("grapes", Set7).
+Set9 = multiset:add("cherry", Set8).
+Count = multiset:count("apple", Set7).
+Size = multiset:size(Set7).
+Items = multiset:items(Set7).
+
+Set6 = multiset:new().
+Set9 = multiset:add("cherry", Set8).
+Set10 = multiset:add("cherry", Set9).
+Set11 = multiset:add("grapes", Set10).
+
+
+Set8 = multiset:union(Set5, Set7).
+
+
+
+
+
+Set = multiset:new().
+Set2 = multiset:add("apple", Set).
+Set3 = multiset:add("banana", Set2).
+Set4 = multiset:add("apple", Set3).
+Set5 = multiset:add("banana", Set4).
+Set6 = multiset:new().
+Set7 = multiset:add("cherry", Set6).
+Set8 = multiset:union(Set5, Set7).
+Set9 = multiset:add("cherry", Set8).
+Set10 = multiset:add("grapes", Set9).
+Set11 = multiset:delete("apple", Set10).
+
+
+
+
+
+Size = multiset:size(Set14).
+Items = multiset:items(Set14).
+
+
+
+Функция new/0
+Алгоритмическая сложность функции new/0 - O(1).
+
+Функция add/2
+Алгоритмическая сложность функции add/2 - O(n), где n - размер текущего списка.
+
+Функция delete/2
+Алгоритмическая сложность функции delete/2 - O(n), где n - размер текущего списка.
+
+Функция count/2
+Алгоритмическая сложность функции count/2 - O(n), где n - размер текущего списка.
+
+Функция size/1
+Алгоритмическая сложность функции size/1 - O(1).
+
+Функция items/1
+Алгоритмическая сложность функции items/1 - O(1).
+
+Функция union/2
+Алгоритмическая сложность функции union/2 - O(n+m), где n и m - размеры списков List1 и List2 соответственно.
+
+
+
+
+
+
+Функция new не содержит циклов или рекурсии, ее сложность O(1).
+
+Функция add использует поиск ключа в списке, который может занимать до O(n/2) времени,
+где n - размер списка. Затем, в худшем случае, функция может использовать функцию lists:keyreplace,
+которая занимает до O(n) времени, чтобы заменить значение ключа в списке. Таким образом, сложность функции add равна O(n).
+
+Функция delete также использует поиск ключа в списке, который может занимать до O(n/2) времени.
+Далее, в худшем случае, функция может использовать функцию lists:keyreplace или lists:keydelete,
+каждая из которых занимает до O(n) времени, чтобы изменить или удалить значение ключа в списке.
+Таким образом, сложность функции delete равна O(n).
+
+Функция count также использует поиск ключа в списке, который может занимать до O(n/2) времени.
+Затем функция возвращает значение ключа, что занимает O(1) времени.
+Таким образом, сложность функции count равна O(n).
+
+Функция size возвращает размер списка, что занимает O(1) времени.
+
+Функция items также возвращает список, что занимает O(1) времени.
+
+Функция union использует цикл, который выполняется для каждого элемента в списке.
+Внутри цикла выполняется поиск ключа в списке, что может занимать до O(n/2) времени.
+Затем, в худшем случае, функция может использовать функцию lists:keyreplace, которая занимает до O(n) времени,
+чтобы заменить значение ключа в списке. Таким образом, сложность функции union равна O(n^2).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
